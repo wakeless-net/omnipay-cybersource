@@ -14,7 +14,7 @@ class AuthorizeRequest extends AbstractRequest
 
         $data = $this->getBaseData() + $this->getTransactionData();
         $data['signed_date_time'] = gmdate("Y-m-d\TH:i:s\Z");
-        $data['unsigned_field_names'] = 'card_type,card_number,card_expiry_date';
+        $data['unsigned_field_names'] = '';
         $data['signed_field_names'] = implode(',', array_keys($data)) . ',signed_field_names';
         $data['signature'] = $this->signData($data);
 
@@ -29,6 +29,7 @@ class AuthorizeRequest extends AbstractRequest
     public function signData($data)
     {
         return base64_encode(hash_hmac('sha256', $this->buildDataToSign($data), $this->getSecretKey(), true));
+        
     }
 
     public function buildDataToSign($data)
@@ -37,6 +38,7 @@ class AuthorizeRequest extends AbstractRequest
         foreach ($signedFieldNames as $field) {
             $dataToSign[] = $field . "=" . $data[$field];
         }
+
         return implode(",", $dataToSign);
     }
 
@@ -65,9 +67,20 @@ class AuthorizeRequest extends AbstractRequest
 
     public function getTransactionData()
     {
-        return array(
-            'reference_number' => $this->getTransactionId(),
-            'amount' => $this->getAmount(),
+        $data = [];
+        $merchant_data = $this->getParameter("merchantDefined");
+        $i = 1;
+        foreach($merchant_data as $key => $value) {
+          $data["merchant_defined_data$i"] = $value;
+          $i ++;
+        }
+
+
+
+
+        return $data + array(
+            'reference_number' => "as".$this->getTransactionId(),
+            'amount' => (int)$this->getAmount(),
             'currency' => $this->getCurrency(),
             'description' => $this->getDescription(),
             'payment_method' => $this->getPaymentMethod(),
@@ -121,5 +134,9 @@ class AuthorizeRequest extends AbstractRequest
     public function getTransactionType()
     {
         return 'authorization';
+    }
+
+    public function setMerchantDefined($data) {
+      return $this->setParameter("merchantDefined", $data);
     }
 }
