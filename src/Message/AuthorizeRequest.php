@@ -79,7 +79,7 @@ class AuthorizeRequest extends AbstractRequest
 
 
         return $data + array(
-            'reference_number' => "as".$this->getTransactionId(),
+            'reference_number' => $this->getTransactionId(),
             'amount' => (int)$this->getAmount(),
             'currency' => $this->getCurrency(),
             'description' => $this->getDescription(),
